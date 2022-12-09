@@ -1,7 +1,8 @@
+import java.awt.event.ActionEvent;
 import java.sql.*;
 import java.util.Properties;
 
-public class DB_helper {
+public class DB_helper implements WindowListener{
     private String db_string = "jdbc:sqlserver://localhost;";
     private Properties db_properties;
     private Connection db_connection;
@@ -28,19 +29,24 @@ public class DB_helper {
         db_properties.put("user","SA");
         db_properties.put("password","pass10_QWweadsa");
         db_properties.put("trustServerCertificate","true");
+    }
 
+    public boolean connect(){
         try {
 
             db_connection = DriverManager.getConnection(db_string, db_properties);
             if (db_connection!=null){
                 System.out.println("Connected.");
+                return true;
             }
         }
         // Handle any errors that may have occurred.
         catch (SQLException e) {
             e.printStackTrace();
         }
+        return false;
     }
+
 
     public boolean addRecipe(Recipe recipe){
 
@@ -124,7 +130,7 @@ public class DB_helper {
         }
 
         try {
-            String queryString = "UPDATE recipe_db.dbo.recipes SET "+type + " = "+ value +" WHERE name = '" + name + "'";
+            String queryString = "UPDATE recipe_db.dbo.recipes SET "+type + " = '"+ value +"' WHERE name = '" + name + "'";
             PreparedStatement stmt = db_connection.prepareStatement(queryString);
             stmt.execute();
             return true;
@@ -134,5 +140,25 @@ public class DB_helper {
         }
 
         return false;
+    }
+
+    @Override
+    public void addDataEvent(Recipe e) {
+        addRecipe(e);
+    }
+
+    @Override
+    public void deleteDataEvent(String name) {
+        removeRecipe(name);
+    }
+
+    @Override
+    public void updateDataEvent(String name, String value, String type) {
+        updateRecipe(name, value, type);
+    }
+
+    @Override
+    public void fetchDataEvent() {
+
     }
 }

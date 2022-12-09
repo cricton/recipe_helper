@@ -1,14 +1,16 @@
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Random;
 
-public class Window{
+
+
+public class Window {
+    private ArrayList<WindowListener> listeners = new ArrayList<>();
     private JPanel window;
     private DB_helper helper;
 
@@ -31,6 +33,10 @@ public class Window{
         }
 
     };
+
+    public void addActionListener(WindowListener toAdd){
+        listeners.add(toAdd);
+    }
 
     public JPanel getUI(){
         return window;
@@ -61,11 +67,14 @@ public class Window{
                 e -> {
                     Recipe test = new Recipe("Toast");
                     //JOptionPane.showInputDialog(new Frame(),"Make "+tableModel.getValueAt(selector, 0)+"!","Recipe choice:",JOptionPane.INFORMATION_MESSAGE);
-                    boolean addedToDB = helper.addRecipe(test);
-                    //if the entry was added to the DB we update the table
-                    if(addedToDB){
-                        tableModel.addRow(new Object[]{test.getName(), test.getDifficulty(), test.getPrepTime()});
-                    }
+
+                    //raise add data event
+                    for (WindowListener hl : listeners)
+                        hl.addDataEvent(test);
+
+                    //update table
+                    tableModel.addRow(new Object[]{test.getName(), test.getDifficulty(), test.getPrepTime()});
+
                 }
         );
 
@@ -102,10 +111,14 @@ public class Window{
         //add delete action listener
         btnDelete.addActionListener(
                 e -> {
-                    boolean removedFromDB = helper.removeRecipe(currentRecipe);
-                    if (removedFromDB) {
-                        tableModel.removeRow(currentRow);
-                    }
+
+                    //raise delete add data event
+                    for (WindowListener hl : listeners)
+                        hl.deleteDataEvent(currentRecipe);
+
+                    //update table
+                    tableModel.removeRow(currentRow);
+
                 }
         );
     }
@@ -130,7 +143,7 @@ public class Window{
             tableModel.addRow(new Object[]
                     {db_data.getString("name"),
                      db_data.getString("difficulty"),
-                     db_data.getString("duration")});
+                     db_data.getString("preptime")});
         }
 
 
@@ -159,9 +172,13 @@ public class Window{
                     if(column == 1){
                         type = "difficulty";
                     }else if (column == 2){
-                        type = "duration";
+                        type = "preptime";
                     }
-                    helper.updateRecipe((String) tableModel.getValueAt( row, 0), (String) tableModel.getValueAt(row, column), type);
+
+
+                    //raise update data event
+                    for (WindowListener hl : listeners)
+                        hl.updateDataEvent((String) tableModel.getValueAt( row, 0), (String) tableModel.getValueAt(row, column), type);
                 }
             }
         });
@@ -182,4 +199,6 @@ public class Window{
         window.add(scrollPane, gbc);
 
     }
+
+
 }
