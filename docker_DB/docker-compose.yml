@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+    db: 
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        volumes:
+            - sqldata:/var/opt/mssql
+        environment:
+            - ACCEPT_EULA=Y
+            - MSSQL_SA_PASSWORD=pass10_QWweadsa
+        ports:
+            - "1433:1433"
+            
+volumes:
+    sqldata:
