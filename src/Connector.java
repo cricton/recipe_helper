@@ -18,7 +18,9 @@ public class Connector {
     }
 
     public void setupEventListener(){
+
         window.addActionListener(helper);
+        helper.addActionListener(window);
     }
 
 }

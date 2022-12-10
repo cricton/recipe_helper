@@ -1,3 +1,5 @@
+import TypeDefs.Recipe;
+
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -9,32 +11,28 @@ import java.util.Random;
 
 
 
-public class Window {
-    private ArrayList<WindowListener> listeners = new ArrayList<>();
+public class Window implements DBEventListener {
+    private ArrayList<WindowEventListener> listeners = new ArrayList<>();
     private JPanel window;
-    private DB_helper helper;
+
 
     private String currentRecipe;
     private int currentRow;
     private RecipeTableModel tableModel;
 
+    private JPanel recipeDialog;
 
-    public Window(DB_helper helper){
-        this.helper = helper;
+    public Window(){
 
         window = new JPanel();
         window.setLayout(new GridBagLayout());
 
         setupButtons();
-        try {
-            setupTable();
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
+        setupTable();
 
     };
 
-    public void addActionListener(WindowListener toAdd){
+    public void addActionListener(WindowEventListener toAdd){
         listeners.add(toAdd);
     }
 
@@ -42,11 +40,144 @@ public class Window {
         return window;
     }
 
-    private ResultSet fetchAllData(){
-        return helper.getRecipes();
+
+    public JFrame setupRecipeDialog(){
+
+        JFrame recipeFrame = new JFrame("Add a recipe!");
+
+        recipeDialog = new JPanel();
+        recipeDialog.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc;
+
+        JLabel nameText = new JLabel("Recipe name:");
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(nameText, gbc);
+
+        JTextField nameField = new JTextField();
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 3;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(nameField, gbc);
+
+        JLabel difficultyText = new JLabel("Difficulty:");
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(difficultyText, gbc);
+
+        String[] difficulties = { "Easy", "Moderate", "Hard"};
+        JComboBox<String> difficultyField = new JComboBox<>(difficulties);
+
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 3;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(difficultyField, gbc);
+
+
+        JLabel prepTimeText = new JLabel("Prep time:");
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(prepTimeText, gbc);
+
+        JTextField prepTimeField = new JTextField();
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 3;
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(prepTimeField, gbc);
+
+        JButton btnSave = new JButton("Save");
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.gridx = 3;
+        gbc.gridy = 3;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(btnSave, gbc);
+        btnSave.addActionListener(e -> {
+            Recipe newRecipe = new Recipe(nameField.getText());
+            newRecipe.setDifficulty(difficultyField.getSelectedIndex());
+            newRecipe.setPrepTime(Integer.parseInt(prepTimeField.getText()));
+
+            //raise add data event
+            for (WindowEventListener listener : listeners)
+                listener.addDataEvent(newRecipe);
+
+            //update table
+            boolean valueExists = false;
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (newRecipe.getName().equals((String)tableModel.getValueAt(i, 0))){
+                    valueExists = true;
+                }
+            }
+
+            if (!valueExists) tableModel.addRow(new Object[]{newRecipe.getName(), newRecipe.getDifficulty(), newRecipe.getPrepTime()});
+
+            recipeFrame.dispose();
+        });
+
+        JButton btnCancel = new JButton("Cancel");
+        gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weightx = 1;
+        recipeDialog.add(btnCancel, gbc);
+        btnCancel.addActionListener(e -> {
+            recipeFrame.dispose();
+        });
+
+        recipeFrame.getContentPane().add(recipeDialog);
+        recipeFrame.setLocationRelativeTo(null);
+        recipeFrame.pack();
+
+        return(recipeFrame);
     }
-    private int fetchDataSize(){
-        return helper.getRecipeNumber();
+
+    public void showRecipeDialog(){
+        JFrame recipeFrame = setupRecipeDialog();
+
+
+
+        recipeFrame.setVisible(true);
     }
 
     public void setupButtons(){
@@ -65,15 +196,8 @@ public class Window {
 
         btnSave.addActionListener(
                 e -> {
-                    Recipe test = new Recipe("Toast");
-                    //JOptionPane.showInputDialog(new Frame(),"Make "+tableModel.getValueAt(selector, 0)+"!","Recipe choice:",JOptionPane.INFORMATION_MESSAGE);
 
-                    //raise add data event
-                    for (WindowListener hl : listeners)
-                        hl.addDataEvent(test);
-
-                    //update table
-                    tableModel.addRow(new Object[]{test.getName(), test.getDifficulty(), test.getPrepTime()});
+                    showRecipeDialog();
 
                 }
         );
@@ -93,7 +217,7 @@ public class Window {
                 e -> {
                     Random r = new Random();
                     int selector = r.nextInt(tableModel.getRowCount());
-                    JOptionPane.showMessageDialog(new Frame(),"Make "+tableModel.getValueAt(selector, 0)+"!","Recipe choice:",JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(new Frame(),"Make "+tableModel.getValueAt(selector, 0)+"!","TypeDefs.Recipe choice:",JOptionPane.INFORMATION_MESSAGE);
 
                 }
         );
@@ -113,22 +237,29 @@ public class Window {
                 e -> {
 
                     //raise delete add data event
-                    for (WindowListener hl : listeners)
-                        hl.deleteDataEvent(currentRecipe);
+                    for (WindowEventListener listener : listeners)
+                        listener.deleteDataEvent(currentRecipe);
 
                     //update table
-                    tableModel.removeRow(currentRow);
+                    if(currentRecipe!=null){
+                        tableModel.removeRow(currentRow);
+                    }
+
 
                 }
         );
     }
 
+    public void addTableData(ResultSet set) throws SQLException {
+        while (set.next()){
+            tableModel.addRow(new Object[]
+                    {set.getString("name"),
+                    set.getString("difficulty"),
+                    set.getString("preptime")});
+        }
+    }
 
-
-    public void setupTable() throws SQLException {
-
-        //fetch recipes from local database
-        ResultSet db_data = fetchAllData();
+    public void setupTable() {
 
         //generate table with table model
         this.tableModel = new RecipeTableModel();
@@ -139,12 +270,7 @@ public class Window {
                 "Difficulty",
                 "Prep Time"};
         tableModel.setColumnIdentifiers(columnNames);
-        while (db_data.next()){
-            tableModel.addRow(new Object[]
-                    {db_data.getString("name"),
-                     db_data.getString("difficulty"),
-                     db_data.getString("preptime")});
-        }
+
 
 
         //add list selection listener to be able to delete entries
@@ -177,8 +303,8 @@ public class Window {
 
 
                     //raise update data event
-                    for (WindowListener hl : listeners)
-                        hl.updateDataEvent((String) tableModel.getValueAt( row, 0), (String) tableModel.getValueAt(row, column), type);
+                    for (WindowEventListener listener : listeners)
+                        listener.updateDataEvent((String) tableModel.getValueAt( row, 0), (String) tableModel.getValueAt(row, column), type);
                 }
             }
         });
@@ -190,6 +316,7 @@ public class Window {
         GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 3;
 
         gbc.gridx = 0;
@@ -201,4 +328,13 @@ public class Window {
     }
 
 
+    @Override
+    public void dataFetchedEvent(ResultSet e) {
+        try {
+            addTableData(e);
+        }catch (SQLException f){
+            f.printStackTrace();
+        }
+
+    }
 }

@@ -1,6 +1,6 @@
-import java.util.ArrayList;
+package TypeDefs;
+
 import java.util.HashMap;
-import java.util.Map;
 
 public class Recipe {
 

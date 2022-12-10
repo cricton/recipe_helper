@@ -1,11 +1,15 @@
-import java.awt.event.ActionEvent;
+import TypeDefs.Recipe;
+
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Properties;
 
-public class DB_helper implements WindowListener{
+
+public class DB_helper implements WindowEventListener {
     private String db_string = "jdbc:sqlserver://localhost;";
     private Properties db_properties;
     private Connection db_connection;
+    private ArrayList<DBEventListener> listeners = new ArrayList<>();
 
     public DB_helper(String db_string){
         this.db_string = db_string;
@@ -47,6 +51,9 @@ public class DB_helper implements WindowListener{
         return false;
     }
 
+    public void addActionListener(DBEventListener toAdd){
+        listeners.add(toAdd);
+    }
 
     public boolean addRecipe(Recipe recipe){
 
@@ -80,7 +87,12 @@ public class DB_helper implements WindowListener{
             String queryString = "SELECT * FROM recipe_db.dbo.recipes";
             //System.out.println(queryString);
             PreparedStatement stmt = db_connection.prepareStatement(queryString);
-            return stmt.executeQuery();
+            ResultSet result = stmt.executeQuery();
+            //raise add data event
+            for (DBEventListener listener : listeners)
+                listener.dataFetchedEvent(result);
+
+            return result;
         }catch(SQLException e){
             e.printStackTrace();
         }
@@ -157,8 +169,4 @@ public class DB_helper implements WindowListener{
         updateRecipe(name, value, type);
     }
 
-    @Override
-    public void fetchDataEvent() {
-
-    }
 }

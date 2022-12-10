@@ -1,6 +1,8 @@
+package TypeDefs;
+
 public class Ingredient {
 
-    enum Unit {g, ml, pieces}
+    public enum Unit {g, ml, pieces}
 
     private String name;
     private Unit unit;

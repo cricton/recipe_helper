@@ -1,10 +1,10 @@
-import java.awt.event.ActionEvent;
+import TypeDefs.Recipe;
 
-public interface WindowListener {
+public interface WindowEventListener {
 
     void addDataEvent(Recipe e);
     void deleteDataEvent(String name);
     void updateDataEvent(String name, String value, String type);
-    void fetchDataEvent();
+
 
 }

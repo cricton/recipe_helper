@@ -1,3 +1,6 @@
+import TypeDefs.Ingredient;
+import TypeDefs.Recipe;
+
 import javax.swing.*;
 import java.sql.SQLException;
 
@@ -17,16 +20,22 @@ public class Main {
 
         //create database helper to connect to local DB
         DB_helper helper = new DB_helper();
-        helper.connect();
-        Recipe test = new Recipe("Shoe", 12, 2);
-        helper.addRecipe(test);
+        Window window = new Window();
 
-        Window window = new Window(helper);
+
+
+        //setup event listeners
         Connector conn = new Connector();
-
         conn.addComponent(window);
         conn.addComponent(helper);
         conn.setupEventListener();
+
+        //connect to DB and fetch all recipes
+        helper.connect();
+        helper.getRecipes();
+
+        Recipe test = new Recipe("Shoe", 12, 2);
+        helper.addRecipe(test);
 
         JFrame frame = new JFrame("Recipe Book");
         frame.getContentPane().add(window.getUI());
